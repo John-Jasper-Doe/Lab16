@@ -1,0 +1,18 @@
+/**
+ * @file version.hpp
+ * @brief Project version announcement.
+ */
+
+/* See the license in the file "LICENSE.txt" in the root directory. */
+
+#ifndef REALTY_VERSION_HPP_
+#define REALTY_VERSION_HPP_
+
+#define REALTY_MAJOR @REALTY_MAJOR@
+#define REALTY_MINOR @REALTY_MINOR@
+#define REALTY_PATCH @REALTY_PATCH@
+
+#define REALTY_VERSION \
+    (REALTY_MAJOR * 10000 + REALTY_MINOR * 100 + REALTY_PATCH)
+
+#endif /* REALTY_VERSION_HPP_ */
