@@ -9,13 +9,16 @@
 #include "clusterization.hpp"
 
 /** @brief The namespace of the "Clustering" project. */
-namespace kkmeans {
+namespace rclst {
 /** @brief The namespace of the "Core" */
 namespace core {
 
+using namespace coretypes::core;
+
 clusterize::clusterize(datas_t&& input) noexcept : input_{std::move(input)} {}
 
-clust_datas_t clusterize::exec(std::size_t k) {
+void clusterize::serialize(std::size_t k, const std::string& model_file,
+                           const std::string& clusters_file) {
   // Here we declare an instance of the kcentroid object.  It is the object used to
   // represent each of the centers used for clustering.  The kcentroid has 3 parameters
   // you need to set.  The first argument to the constructor is the kernel we wish to
@@ -31,7 +34,6 @@ clust_datas_t clusterize::exec(std::size_t k) {
   // that are configured with the parameters from the kc object we defined above.
   dlib::kkmeans<kernel_type> test(kc);
 
-  clust_datas_t res;
   core::datas_t initial_centers;
 
   // tell the kkmeans object we made that we want to run k-means with k clusters
@@ -45,14 +47,26 @@ clust_datas_t clusterize::exec(std::size_t k) {
   // now run the k-means algorithm on our set of samples.
   test.train(input_, initial_centers);
 
-  // now loop over all our samples and print out their predicted class.  In this example
-  // all points are correctly identified.
-  for (const auto& point : input_) {
-    res.emplace_back(clust_data{point(0), point(1), test(point)});
+  // save model
+  dlib::serialize(model_file) << test;
+
+  // save clusters
+  std::map<unsigned long, coretypes::core::datas_t> clusters;
+  for (std::size_t i = 0; i != input_.size(); ++i) {
+    unsigned long cluster = test(input_[i]);
+    auto it = clusters.find(cluster);
+    if (it != clusters.end()) {
+      it->second.push_back(std::move(input_[i]));
+    }
+    else {
+      datas_t new_samples;
+      new_samples.push_back(std::move(input_[i]));
+      clusters[cluster] = std::move(new_samples);
+    }
   }
 
-  return res;
+  dlib::serialize(clusters_file) << clusters;
 }
 
 } /* core:: */
-} /* kkmeans:: */
+} /* rclst:: */

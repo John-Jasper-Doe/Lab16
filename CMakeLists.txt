@@ -44,7 +44,7 @@ find_package(Boost COMPONENTS system program_options REQUIRED)
 # Setting options on project
 option(CLANG_FORMAT "Enable clang-format target" ON)
 option(DOCUMENTATION "Build documentation" ON)
-option(TESTING "Build tests" OFF)
+option(TESTING "Build tests" ON)
 
 if(CLANG_FORMAT)
   include(clang-format)
