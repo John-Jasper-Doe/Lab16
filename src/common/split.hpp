@@ -20,7 +20,7 @@ namespace common {
  *
  * @details
  * This function slices a given string into substrings and writes them to a
- * string vector. The line feed character ("\n") is used as a separator.
+ * string vector. The line feed character (";") is used as a separator.
  *
  * @note If the delimiter is at the beginning of the line, then the first
  * substring will be empty. That is, the line is empty before the separator.
@@ -29,9 +29,13 @@ namespace common {
  * @return Vector of substrings.
  */
 inline std::vector<std::string> split(const std::string& str) {
-  std::regex ws_re(";+");
-  return std::vector<std::string>{std::sregex_token_iterator(str.begin(), str.end(), ws_re, -1),
-                                  std::sregex_token_iterator()};
+  using namespace std::string_literals;
+  std::regex ws_re(";");
+  std::vector<std::string> res{std::sregex_token_iterator(str.begin(), str.end(), ws_re, -1),
+                               std::sregex_token_iterator()};
+  if (str.substr(str.size() - 1, 1) == ";"s)
+    res.push_back("");
+  return res;
 }
 
 } /* common:: */
