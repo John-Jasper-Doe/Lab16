@@ -60,16 +60,16 @@ void get_param(const int argc, const char* const argv[], param_t& param) {
     throw std::invalid_argument("Number of clusters was not set");
 
   if (vm.count("model"))
-    param.model_file = vm["model"].as<std::string>();
+    param.model_file = vm["model"].as<std::string>() + std::string(".XXX");
   else if (vm.count("m"))
-    param.model_file = vm["m"].as<std::string>();
+    param.model_file = vm["m"].as<std::string>() + std::string(".XXX");
   else
     throw std::invalid_argument("Number of clusters was not set");
 
   if (vm.count("clust"))
-    param.clusters_file = vm["clust"].as<std::string>();
+    param.clusters_file = vm["clust"].as<std::string>() + std::string(".XXX");
   else if (vm.count("c"))
-    param.clusters_file = vm["c"].as<std::string>();
+    param.clusters_file = vm["c"].as<std::string>() + std::string(".XXX");
   else
     throw std::invalid_argument("Number of clusters was not set");
 }
@@ -79,14 +79,15 @@ void get_param(const int argc, const char* const argv[], param_t& param) {
  * @param [in] skipped_coordinates - map for skipped cordinates.
  * @param [out] result - vector of rows.
  */
-void fill_spaces(
-    std::map<rclst::core::column_ix_t, std::vector<rclst::core::row_ix_t>> skipped_coordinates,
-    std::vector<rclst::core::sample_t>& result) {
-  using pair_t = std::pair<const rclst::core::column_ix_t, std::vector<rclst::core::row_ix_t>>;
+void fill_spaces(std::map<coretypes::core::column_ix_t, std::vector<coretypes::core::row_ix_t>>
+                     skipped_coordinates,
+                 std::vector<coretypes::core::sample_t>& result) {
+  using pair_t =
+      std::pair<const coretypes::core::column_ix_t, std::vector<coretypes::core::row_ix_t>>;
 
   for (const pair_t& p : skipped_coordinates) {
-    const rclst::core::column_ix_t& column_ix = p.first;
-    const std::vector<rclst::core::row_ix_t>& skipped_row_ixes = p.second;
+    const coretypes::core::column_ix_t& column_ix = p.first;
+    const std::vector<coretypes::core::row_ix_t>& skipped_row_ixes = p.second;
 
     double sum = 0.0;
     for (std::size_t row_ix = 0; row_ix != result.size(); ++row_ix) {
@@ -95,7 +96,7 @@ void fill_spaces(
 
     std::size_t count = result.size() - skipped_row_ixes.size();
     double avg = sum / count;
-    for (rclst::core::row_ix_t row_ix : skipped_row_ixes) {
+    for (coretypes::core::row_ix_t row_ix : skipped_row_ixes) {
       result[row_ix](static_cast<long>(column_ix)) = avg;
     }
   }
@@ -111,9 +112,10 @@ void fill_spaces(
  * @param [in] istrm - the input stream where the data comes from.
  * @return Data vector ready.
  */
-rclst::core::datas_t read_from(std::istream& istrm) {
-  std::vector<rclst::core::sample_t> res;
-  std::map<rclst::core::column_ix_t, std::vector<rclst::core::row_ix_t>> skipped_coordinates;
+coretypes::core::datas_t read_from(std::istream& istrm) {
+  std::vector<coretypes::core::sample_t> res;
+  std::map<coretypes::core::column_ix_t, std::vector<coretypes::core::row_ix_t>>
+      skipped_coordinates;
 
   std::string tmp{""};
   while (std::getline(istrm, tmp)) {
@@ -122,11 +124,12 @@ rclst::core::datas_t read_from(std::istream& istrm) {
     }
 
     std::vector<std::string> splitted = common::split(tmp);
-    if (splitted.size() != rclst::core::COLUMNS) {
+    if (splitted.size() != coretypes::core::COLUMNS) {
       throw std::runtime_error("Wrong input format");
     }
 
-    if (splitted[rclst::core::COLUMNS - 1].empty() || splitted[rclst::core::COLUMNS - 2].empty()) {
+    if (splitted[coretypes::core::COLUMNS - 1].empty()
+        || splitted[coretypes::core::COLUMNS - 2].empty()) {
       continue;
     }
 
@@ -135,26 +138,26 @@ rclst::core::datas_t read_from(std::istream& istrm) {
       if (splitted[i].empty()) {
         auto it = skipped_coordinates.find(i);
         if (it == skipped_coordinates.end())
-          skipped_coordinates[i] = {std::vector<rclst::core::row_ix_t>{row_ix}};
+          skipped_coordinates[i] = {std::vector<coretypes::core::row_ix_t>{row_ix}};
         else
           it->second.push_back(row_ix);
       }
     }
 
-    rclst::core::sample_t sample;
-    for (std::size_t j = 0; j != rclst::core::COLUMNS - 1; ++j) {
+    coretypes::core::sample_t sample;
+    for (std::size_t j = 0; j != coretypes::core::COLUMNS - 1; ++j) {
       if (!splitted[j].empty())
         sample(static_cast<long>(j)) = std::stod(splitted[j]);
       else
         sample(static_cast<long>(j)) = 0.0;
     }
 
-    const unsigned long long floor = std::stoull(splitted[rclst::core::COLUMNS - 2]);
-    const unsigned long long max_floor = std::stoull(splitted[rclst::core::COLUMNS - 1]);
+    const unsigned long long floor = std::stoull(splitted[coretypes::core::COLUMNS - 2]);
+    const unsigned long long max_floor = std::stoull(splitted[coretypes::core::COLUMNS - 1]);
     if (floor == 1 || floor == max_floor)
-      sample(rclst::core::COLUMNS - 2) = 0.0;
+      sample(coretypes::core::COLUMNS - 2) = 0.0;
     else
-      sample(rclst::core::COLUMNS - 2) = 1.0;
+      sample(coretypes::core::COLUMNS - 2) = 1.0;
     res.push_back(std::move(sample));
   }
 
@@ -176,7 +179,7 @@ int main(int argc, const char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  rclst::core::datas_t input_data = read_from(std::cin);
+  coretypes::core::datas_t input_data = read_from(std::cin);
   rclst::core::clusterize clust(std::move(input_data));
 
   clust.serialize(prm.k_means, prm.model_file, prm.clusters_file);
